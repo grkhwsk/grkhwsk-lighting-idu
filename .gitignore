@@ -1,0 +1,22 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- QGIS ---
+*.qgz~
+*.qgs~
+*.qgd
+.qgis2/
+.qgis3/
+*.gpkg-shm
+*.gpkg-wal
+
+# --- Python / Jupyter ---
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+
+# --- temp ---
+*.tmp
+*.log

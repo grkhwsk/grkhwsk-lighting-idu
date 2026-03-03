@@ -1,0 +1,88 @@
+# ─────────────────────────────────────────
+# config.yaml
+# Конфигурационный файл модели NeedIndex
+# Для пересчёта под другой город — изменить блок location
+# ─────────────────────────────────────────
+
+# ── Город ──────────────────────────────
+location:
+  name: Norilsk
+  region: Russia
+  timezone: Asia/Krasnoyarsk
+  latitude: 69.3535
+  longitude: 88.2027
+
+# ── Сезоны ─────────────────────────────
+seasons:
+  winter:   ["2025-01-15"]
+  summer:   ["2025-07-15"]
+  midseason: ["2025-04-15", "2025-10-15"]  # итоговое значение — среднее
+
+# ── Временные слоты ─────────────────────
+slots:
+  morning: ["06:00", "12:00"]
+  day:     ["12:00", "18:00"]
+  evening: ["18:00", "22:00"]
+  night:   ["22:00", "06:00"]  # переход через полночь
+
+# ── Веса фаз освещённости ───────────────
+# Фазы: day | civil | nautical | astronomical | night
+phase_weights:
+  scenario_1:  # консервативный
+    day:           0.0
+    civil:         0.3
+    nautical:      0.7
+    astronomical:  0.9
+    night:         1.0
+  scenario_2:  # северный / безопасность
+    day:           0.0
+    civil:         0.5
+    nautical:      0.9
+    astronomical:  1.0
+    night:         1.0
+  scenario_3:  # адаптивный
+    day:           0.0
+    civil:         0.2
+    nautical:      0.5
+    astronomical:  0.8
+    night:         1.0
+
+# ── Альбедо ────────────────────────────
+# K_albedo = (1 - rho) / (1 - rho_base)
+albedo:
+  rho_base: 0.15  # городская поверхность без снега
+  scenarios:
+    no_snow:     { rho: 0.15, K_albedo: 1.0  }
+    dirty_snow:  { rho: 0.30, K_albedo: 0.85 }
+    clean_snow:  { rho: 0.90, K_albedo: 0.25 }
+
+# ── Буферные зоны (метры) ───────────────
+buffers:
+  oopz:
+    facility_polygon: 20
+    points:           15
+    space:            0   # без буфера
+  transport:
+    major:      12   # 4 полосы × 3 м
+    residential:  6    # 2 полосы × 3 м
+    local:      3    # только визуализация, в индекс не включается
+
+# ── Сетка ──────────────────────────────
+grid:
+  cell_size: 25   # метры
+  crs: EPSG:32645  # UTM 45N
+
+# ── Пороговая классификация ─────────────
+thresholds:
+  tau_1: 0.25   # рабочий порог
+  tau_2: 0.50   # порог устойчивости
+
+# ── Базовый прогон S0 ───────────────────
+baseline:
+  season:        midseason
+  slot:          evening
+  albedo:        no_snow
+  time_scenario: scenario_1
+
+# ── Шаг дискретизации ───────────────────
+step_minutes: 10

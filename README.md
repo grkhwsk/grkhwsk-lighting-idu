@@ -1,27 +1,54 @@
-# diploma
-# NIR-3: Source Data and Preprocessing
+# Разработка метода моделирования потребности в освещении для планирования световой среды на примере северного города
+**Автор:** Гороховская Д.А.
+**Направление подготовки:** 27.04.07 Наукоемкие технологии и экономика инноваций
+**Год:** 2026
 
-This repository contains source spatial data, preprocessing scripts,
-and scenario datasets used in the NIR-3 research project
-(Digital Urban Studies, ITMO).
+## О работе
+Выпускная квалификационная работа посвящена разработке воспроизводимого метода моделирования потребности в искусственном освещении для целей предпроектного анализа при разработке световых мастер-планов.
+Проблема. Существующие нормативные документы РФ и зарубежная практика светового мастер-планирования не обеспечивают воспроизводимого аналитического инструмента, учитывающего одновременно функциональную структуру территории, режимы работы объектов городской активности и параметры светового климата. Особенно актуально для северных городов, где полярный день / полярная ночь и высокое альбедо снежного покрова создают значительный сезонный контраст потребности в освещении.
 
-## Scope
-- Territory: [to be defined]
-- Data sources: OpenStreetMap, planning documentation
-- Coordinate system: to be defined
-- Linking radius (R_link): 40 m
+### Метод. Алгоритм интегрирует три фактора в единую модель:
 
-## Repository structure
-/data
-  /raw          # original, unmodified data
-  /interim      # intermediate processing results
-  /processed    # final datasets used in the method
-  /scenarios    # modified datasets for scenario analysis
+**Пространственный** — маска потребности (Mask): объединение зон влияния объектов городской активности (POI, rank = 1) и буферов транспортной инфраструктуры.
+**Временной** — матрица активности объектов по временным слотам (утро / день / вечер / ночь) и коэффициент K_time (доля тёмного времени для заданного сезона и координат).
+**Климатический** — коэффициент K_albedo (влияние снежного покрова на воспринимаемую освещённость).
 
-/docs           # dataset passport, specifications, decisions
-/notebooks      # data loading and preprocessing notebooks
-/reports        # QA reports and figures
+**Итоговая метрика** – NeedIndex (0-1) — рассчитывается как произведение маски, коэффициента активности объектов, K_time и K_albedo. Метод дополнен картой зон с риском пересвета и паспортом световой среды на уровне кварталов.
+Апробация выполнена на материалах центральной части г. Норильска. Исходные данные — открытые источники (OSM, ФГИС ТП).
 
-## Reproducibility
-All preprocessing steps are documented and reproducible.
-Parameters are fixed and described in the documentation.
+### Исходные данные
+Все данные, использованные в эксперименте, размещены в папке data/.
+ФайлФорматИсточникОписаниеzones.geojsonGeoJSON (Polygon)ФГИС ТПТерриториальные зоны ПЗЗ, агрегированные в 6 групп; атрибуты: zone_type, zone_type_idroads.geojsonGeoJSON (LineString)OpenStreetMapУлично-дорожная сеть; атрибуты: highway_type, highway_type_idpoi.geojsonGeoJSON (Point/Polygon)OpenStreetMapОбъекты городской активности (411 объектов); атрибуты: activity_type, spatial_role, rankbuildings.geojsonGeoJSON (Polygon)OpenStreetMapЗастройка; атрибут: is_livingactivity_matrix.csvCSVавторскаяМатрица активности объектов по временным слотамk_time_norilsk.csvCSVрасчётныеКоэффициенты K_time по сезонам и временным слотам для г. Норильскаk_albedo.csvCSVрасчётныеКоэффициенты K_albedo по сезонам
+Все векторные слои приведены к системе координат UTM 45N (EPSG:32645).
+Топологическая подготовка (устранение самопересечений, наложений, дублей) описана в Приложении А ВКР.
+
+Программный код
+Реализация алгоритма — в файле lighting_need_model.ipynb.
+Ноутбук воспроизводит полный pipeline:
+
+Загрузка и валидация исходных данных.
+Формирование маски потребности в освещении (Mask).
+Формирование маски круглосуточной потребности (mask_24h).
+Расчёт NeedIndex для базового сценария (S0) и сценарного анализа.
+Построение карты зон с риском пересвета.
+Формирование паспорта световой среды на уровне кварталов.
+
+Зависимости: geopandas, shapely, numpy, pandas, matplotlib.
+Установка: pip install -r requirements.txt
+
+Структура репозитория
+├── data/
+│   ├── zones.geojson
+│   ├── roads.geojson
+│   ├── poi.geojson
+│   ├── buildings.geojson
+│   ├── activity_matrix.csv
+│   ├── k_time_norilsk.csv
+│   └── k_albedo.csv
+├── lighting_need_model.ipynb   # основной ноутбук с демонстрацией метода
+├── requirements.txt
+├── ВКР_Гороховская_ДА.pdf      # текст работы
+└── README.md
+
+Текст работы
+Полный текст ВКР доступен в файле ВКР_Гороховская_ДА.pdf.

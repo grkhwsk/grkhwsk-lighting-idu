@@ -1,27 +1,42 @@
-# diploma
-# NIR-3: Source Data and Preprocessing
+# Разработка метода моделирования потребности в освещении для планирования световой среды на примере северного города
+**Автор:** Гороховская Д.А.
+**Направление подготовки:** 27.04.07 Наукоемкие технологии и экономика инноваций
+**Год:** 2026
 
-This repository contains source spatial data, preprocessing scripts,
-and scenario datasets used in the NIR-3 research project
-(Digital Urban Studies, ITMO).
+## О работе
+Выпускная квалификационная работа посвящена разработке воспроизводимого метода моделирования потребности в искусственном освещении для целей предпроектного анализа при разработке световых мастер-планов.
 
-## Scope
-- Territory: [to be defined]
-- Data sources: OpenStreetMap, planning documentation
-- Coordinate system: to be defined
-- Linking radius (R_link): 40 m
+Проблема. Существующие нормативные документы РФ и зарубежная практика светового мастер-планирования не обеспечивают воспроизводимого аналитического инструмента, учитывающего одновременно функциональную структуру территории, режимы работы объектов городской активности и параметры светового климата. Особенно актуально для северных городов, где полярный день / полярная ночь и высокое альбедо снежного покрова создают значительный сезонный контраст потребности в освещении.
 
-## Repository structure
-/data
-  /raw          # original, unmodified data
-  /interim      # intermediate processing results
-  /processed    # final datasets used in the method
-  /scenarios    # modified datasets for scenario analysis
+### Метод. Алгоритм интегрирует три фактора в единую модель:
 
-/docs           # dataset passport, specifications, decisions
-/notebooks      # data loading and preprocessing notebooks
-/reports        # QA reports and figures
+**Пространственный** - маска потребности (Mask): объединение зон влияния объектов городской активности (POI, rank = 1) и буферов транспортной инфраструктуры.
 
-## Reproducibility
-All preprocessing steps are documented and reproducible.
-Parameters are fixed and described in the documentation.
+**Временной** — матрица активности объектов по временным слотам (утро / день / вечер / ночь) и коэффициент K_time (доля тёмного времени для заданного сезона и координат).
+
+**Климатический** — коэффициент K_albedo (влияние снежного покрова на воспринимаемую освещённость).
+
+**Итоговая метрика** – NeedIndex (0-1) — рассчитывается как произведение маски, коэффициента активности объектов, K_time и K_albedo. Метод дополнен картой зон с риском пересвета и паспортом световой среды на уровне кварталов.
+Апробация выполнена на материалах центральной части г. Норильска. Исходные данные — открытые источники (OSM, ФГИС ТП).
+
+### Исходные данные
+Территориальные зоны ПЗЗ, агрегированные в 6 групп - zones.geojson; polygon; источник - ФГИС ТП; атрибуты: zone_type, zone_type_id
+
+Улично-дорожная сеть - roads.geojsonGeoJSON; LineString; источник - OpenStreetMap; атрибуты: highway_type, highway_type_id
+
+Объекты городской активности (411 объектов) - poi.geojson; Point/Polygon; источник - OpenStreetMap; атрибуты: activity_type, spatial_role, rank
+
+Застройка - buildings.geojson; Polygon; источник - OpenStreetMap; атрибут: is_living
+
+Матрица активности объектов по временным слотам - activity_matrix.csv
+
+Коэффициент K_time по сезонам и временным слотам для г. Норильска - k_time_norilsk.csv
+
+Коэффициент K_albedo по сезонам - k_albedo.csv
+
+Все векторные слои приведены к системе координат UTM 45N (EPSG:32645).
+Подготовка исходных данных осуществляется в QGIS (устранение самопересечений, наложений, дублей) описана в Приложении А ВКР.
+
+
+Текст работы
+Полный текст ВКР доступен в файле ВКР_Гороховская_ДА.pdf. (будет добавлен позже)

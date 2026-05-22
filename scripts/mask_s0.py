@@ -276,6 +276,67 @@ def get_conflict_type(row):
 
 result["conflict_type"] = result.apply(get_conflict_type, axis=1)
 
+"""
+ПАТЧ для mask_s0.py — добавление mask_24h
+
+Вставить ПОСЛЕ строки:
+    result["conflict_type"] = result.apply(get_conflict_type, axis=1)
+
+И ПЕРЕД строкой:
+    result = gpd.GeoDataFrame(result, geometry="geometry", crs=target_crs)
+"""
+
+# ─────────────────────────────────────────
+# МАСКА 24H
+# ─────────────────────────────────────────
+# Ячейка получает mask_24h = 1 если попадает в буфер:
+# — объектов с активностью во всех 4 слотах (hospital, bus_station, police, fire_station)
+# — ИЛИ дорог класса major
+
+print("Формирование маски 24h...")
+
+# 1. 24h объекты из OOPZ — активны во всех слотах
+oopz_24h = oopz[
+    (oopz["morning"] == 1) &
+    (oopz["day"]     == 1) &
+    (oopz["evening"] == 1) &
+    (oopz["night"]   == 1)
+].copy()
+print(f"  24h объектов OOPZ: {len(oopz_24h)}")
+print(f"  Типы: {oopz_24h['activity_type'].value_counts().to_dict()}")
+
+# 2. Дороги major
+transport_major = transport[transport["road_class"].isin(["major", "residential"])].copy()
+print(f"  Дорог major: {len(transport_major)}")
+
+# 3. Ячейки в буфере 24h объектов
+mask_24h_cells = set()
+
+if len(oopz_24h) > 0:
+    join_24h = gpd.sjoin(
+        grid[["id", "geometry"]],
+        oopz_24h[["geometry"]],
+        how="inner",
+        predicate="intersects"
+    )
+    mask_24h_cells.update(join_24h["id"].unique())
+    print(f"  Ячеек от 24h объектов: {len(join_24h['id'].unique())}")
+
+if len(transport_major) > 0:
+    transport_major_exp = transport_major.explode(index_parts=False).reset_index(drop=True)
+    join_major = gpd.sjoin(
+        grid[["id", "geometry"]],
+        transport_major_exp[["geometry"]],
+        how="inner",
+        predicate="intersects"
+    )
+    mask_24h_cells.update(join_major["id"].unique())
+    print(f"  Ячеек от major дорог: {len(join_major['id'].unique())}")
+
+# 4. Присваиваем флаг
+result["mask_24h"] = result["id"].isin(mask_24h_cells).astype(int)
+print(f"  Итого mask_24h = 1: {result['mask_24h'].sum()} ячеек")
+
 # ─────────────────────────────────────────
 # СОХРАНЕНИЕ
 # ─────────────────────────────────────────

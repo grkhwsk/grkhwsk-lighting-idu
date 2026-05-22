@@ -1,0 +1,7 @@
+﻿zone_group,total_cells,mask_s0_cells,mask_s0_pct,oopz_cells,transport_cells,both_cells,oopz_objects_total,oopz_rank1,oopz_rank0,conflict_total,conflict_overlap,conflict_transport,conflict_both,dominant_type
+Industrial,1207,4,0.3,1,3,0,10,0,10,0,0,0,0,administration_business
+Outside,1252,546,43.6,75,507,36,34,2,32,41,5,36,0,services_retail
+Public,443,200,45.1,189,13,2,153,29,124,34,32,2,0,administration_business
+Recreation,1859,425,22.9,411,15,1,19,9,10,44,43,1,0,recreation
+Residential,1206,362,30.0,335,29,2,105,22,83,32,30,2,0,education
+Special_Restricted,3172,82,2.6,66,17,1,18,4,14,15,14,1,0,recreation

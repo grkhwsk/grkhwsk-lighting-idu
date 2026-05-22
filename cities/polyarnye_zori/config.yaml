@@ -1,0 +1,170 @@
+# ════════════════════════════════════════════════════════════════
+# config.yaml — конфигурационный файл модели NeedIndex
+# ════════════════════════════════════════════════════════════════
+#
+# При переносе на новый город измените ТОЛЬКО блок [location].
+# Всё остальное — параметры модели, не зависящие от города.
+# ════════════════════════════════════════════════════════════════
+
+
+# ── 1. ГОРОД ─────────────────────────────────────────────────────
+# Единственный блок, который меняется при переносе на новый город.
+
+location:
+  name:      "Polyarnye Zori"
+  region:    "Russia"
+  timezone:  "Europe/Moscow"
+  latitude:   67.365788
+  longitude:  32.500975
+  crs:       "EPSG:32636"
+                                # Норильск      → EPSG:32645 (UTM 45N)
+                                # Полярные Зори → EPSG:32636 (UTM 36N)
+                                # Подобрать: https://epsg.io/?q=utm
+
+
+# ── 2. ПУТИ К ДАННЫМ ─────────────────────────────────────────────
+# Относительно папки города (cities/{city}/).
+
+paths:
+  data_raw:        "data/raw"          # оригинальные скачки OSM, ПЗЗ
+  data_interim:    "data/interim"      # промежуточные слои из QGIS (рабочее пространство)
+  data_processed:  "data/processed"   # финальные слои, готовые к скриптам
+  data_generated:  "data/generated"   # создаются скриптами автоматически
+  data_scenarios:  "data/generated/scenarios"
+  output:          "output"            # отчёты и таблицы
+
+
+# ── 3. СЛОИ: ВХОД СКРИПТОВ ───────────────────────────────────────
+# Все файлы из data/processed/ — готовятся вручную через QGIS.
+# data/generated/ — создаются скриптами, вручную не трогать.
+
+layers:
+  # Базовая геометрия
+  aoi:               "data/processed/aoi.gpkg"
+  buildings:         "data/processed/buildings.gpkg"
+  zones:             "data/processed/zones.gpkg"
+
+  # Транспорт
+  transport:         "data/processed/transport_buffer.gpkg"
+
+  # POI rank=1 (готовые к модели, с буферами где нужно)
+  poi_facility_poly: "data/processed/poi_facility_poly_buffer.gpkg"
+  poi_facility_terr: "data/processed/poi_facility_territory.gpkg"
+  poi_space:         "data/processed/poi_space.gpkg"
+  poi_points:        "data/processed/poi_points_buffer.gpkg"
+
+  # POI полные (все ранги, до фильтрации) — нужны для zone_stats.py
+  poi_raw_poly:      "data/processed/poi_raw_poly.gpkg"
+  poi_raw_points:    "data/processed/poi_raw_points.gpkg"
+
+  # Кварталы
+  blocks_raw:        "data/generated/blocks_raw.gpkg"
+
+  # Создаются скриптами
+  grid:              "data/generated/grid_25_aoi.gpkg"
+  blocks:            "data/generated/blocks_final.gpkg"
+
+  # линейный УДС для кварталов 
+  roads_clean:    "data/processed/roads_transport_clean.gpkg"  
+
+
+# ── 4. ОБЩИЕ РЕСУРСЫ МОДЕЛИ ──────────────────────────────────────
+# Файлы, единые для всех городов.
+# Пути относительно корня репозитория (не папки города).
+# Хранятся в project_root/model/ и не дублируются по городам.
+
+shared:
+  activity_matrix: "model/activity_matrix.csv"
+
+
+# ── 5. БУФЕРНЫЕ ЗОНЫ (метры) ─────────────────────────────────────
+
+buffers:
+  poi:
+    facility_polygon:    20   # полигон-здание facility
+    facility_territory:   0   # территориальный полигон (зона задана геометрией)
+    points:              15   # точечные объекты facility
+    space:                0   # открытые пространства (park, square, playground)
+  transport:
+    major:       12   # магистральные улицы, включаются в маску
+    residential:  6   # улицы районного значения, включаются в маску
+    local:        3   # улицы местного значения, в маску НЕ включаются
+
+
+# ── 6. СЕТКА ─────────────────────────────────────────────────────
+
+grid:
+  cell_size_m: 25       # шаг гексагональной сетки, метры
+  # CRS берётся из location.crs
+
+
+# ── 7. СЕЗОНЫ И ВРЕМЕННЫЕ СЛОТЫ ──────────────────────────────────
+
+seasons:
+  winter:    ["2025-01-15"]
+  summer:    ["2025-07-15"]
+  midseason: ["2025-04-15", "2025-10-15"]   # итоговое — среднее по двум датам
+
+slots:
+  morning: ["06:00", "12:00"]
+  day:     ["12:00", "18:00"]
+  evening: ["18:00", "22:00"]
+  night:   ["22:00", "06:00"]   # переход через полночь
+
+step_minutes: 10   # шаг дискретизации при расчёте K_time
+
+
+# ── 8. ВЕСА ФАЗ ОСВЕЩЁННОСТИ ─────────────────────────────────────
+
+phase_weights:
+  scenario_1:   # консервативный (базовый)
+    day:           0.0
+    civil:         0.3
+    nautical:      0.7
+    astronomical:  0.9
+    night:         1.0
+  scenario_2:   # северный / безопасность
+    day:           0.0
+    civil:         0.5
+    nautical:      0.9
+    astronomical:  1.0
+    night:         1.0
+  scenario_3:   # адаптивный
+    day:           0.0
+    civil:         0.2
+    nautical:      0.5
+    astronomical:  0.8
+    night:         1.0
+
+
+# ── 9. АЛЬБЕДО ───────────────────────────────────────────────────
+
+albedo:
+  rho_base: 0.15
+  scenarios:
+    no_snow:     { rho: 0.15, K_albedo: 1.00 }
+    dirty_snow:  { rho: 0.30, K_albedo: 0.85 }
+    clean_snow:  { rho: 0.90, K_albedo: 0.25 }
+
+
+# ── 10. ПОРОГОВАЯ КЛАССИФИКАЦИЯ ───────────────────────────────────
+
+thresholds:
+  tau_1: 0.25
+  tau_2: 0.50
+
+
+# ── 11. БАЗОВЫЙ СЦЕНАРИЙ S0 ──────────────────────────────────────
+
+baseline:
+  season:        midseason
+  slot:          evening
+  albedo:        no_snow
+  time_scenario: scenario_1
+
+# ── 12. ПАРАМЕТРЫ ГЕНЕРАЦИИ КВАРТАЛОВ ────────────────────────────
+# При переносе на другой город можно скорректировать пороги.
+
+blocks_generation:
+  min_area_m2:    10000   # минимальная площадь квартала
+  max_perimeter_m: 20000  # максимальный периметр квартала

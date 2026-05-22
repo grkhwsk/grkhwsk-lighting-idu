@@ -20,10 +20,10 @@ from pathlib import Path
 # ПАРАМЕТРЫ СЦЕНАРИЯ — задайте здесь
 # ─────────────────────────────────────────
 
-SEASON = "winter"  # winter | midseason | summer
-SLOT = "morning"  # morning | day | evening | night
-ALBEDO = "dirty_snow"  # no_snow | dirty_snow | clean_snow
-SCENARIO = "scenario_1"  # scenario_1 | scenario_2 | scenario_3
+SEASON = "midseason"  # winter | midseason | summer
+SLOT = "evening"  # morning | day | evening | night
+ALBEDO = "no_snow"  # no_snow | dirty_snow | clean_snow
+SCENARIO = "scenario_3"  # scenario_1 | scenario_2 | scenario_3
 
 # ─────────────────────────────────────────
 
@@ -149,6 +149,7 @@ result["need_class"] = result["NeedIndex"].apply(classify)
 keep_cols = [
     "id",
     "Mask_S0",
+    "mask_24h",
     "source",
     "dominant_type",
     "activity_types",
